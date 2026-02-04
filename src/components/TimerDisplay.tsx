@@ -1,15 +1,18 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSettings } from '../context/SettingsContext';
+import { useSessions } from '../context/SessionContext';
+import { useTasks } from '../context/TasksContext';
+import { useAudio } from '../hooks/useAudio';
+import { AUDIO_URL, Icons } from '../constants';
 import { TimerMode, TimerStatus } from '../types';
-import type { AppSettings } from '../types';
-import { Icons } from '../constants';
+import type { FocusSession } from '../types';
 
-interface TimerDisplayProps {
-  settings: AppSettings;
-  onSessionComplete: (mode: TimerMode, duration: number) => void;
-}
+const TimerDisplay: React.FC = () => {
+  const { settings } = useSettings();
+  const { setSessions } = useSessions();
+  const { setTasks } = useTasks();
+  const { play } = useAudio(AUDIO_URL);
 
-const TimerDisplay: React.FC<TimerDisplayProps> = ({ settings, onSessionComplete }) => {
   const [mode, setMode] = useState<TimerMode>(TimerMode.WORK);
   const [status, setStatus] = useState<TimerStatus>(TimerStatus.IDLE);
   const [timeLeft, setTimeLeft] = useState(settings.workDuration * 60);
@@ -24,11 +27,38 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({ settings, onSessionComplete
     }
   }, [settings]);
 
+  // Sync timer when settings change or mode changes while IDLE
   useEffect(() => {
     if (status === TimerStatus.IDLE) {
       setTimeLeft(getDurationForMode(mode));
     }
   }, [mode, status, getDurationForMode]);
+
+  const handleSessionComplete = (completedMode: TimerMode, duration: number) => {
+    const newSession: FocusSession = {
+      timestamp: Date.now(),
+      duration,
+      mode: completedMode,
+    };
+    setSessions((prev) => [...prev, newSession]);
+
+    if (completedMode === TimerMode.WORK) {
+      setTasks(prev => {
+        const firstActiveIdx = prev.findIndex(t => !t.completed);
+        if (firstActiveIdx !== -1) {
+          const newTasks = [...prev];
+          newTasks[firstActiveIdx] = {
+            ...newTasks[firstActiveIdx],
+            pomodoros: newTasks[firstActiveIdx].pomodoros + 1
+          };
+          return newTasks;
+        }
+        return prev;
+      });
+    }
+
+    play();
+  };
 
   const toggleTimer = () => {
     if (status === TimerStatus.RUNNING) {
@@ -51,8 +81,8 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({ settings, onSessionComplete
         setTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(timerRef.current!);
-            onSessionComplete(mode, getDurationForMode(mode) / 60);
-            
+            handleSessionComplete(mode, getDurationForMode(mode) / 60);
+
             if (mode === TimerMode.WORK) {
               setMode(TimerMode.SHORT_BREAK);
               if (!settings.autoStartBreaks) setStatus(TimerStatus.IDLE);
@@ -67,7 +97,8 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({ settings, onSessionComplete
       }, 1000);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [status, mode, settings, onSessionComplete, getDurationForMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, mode]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -78,28 +109,29 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({ settings, onSessionComplete
   const progress = (timeLeft / getDurationForMode(mode)) * 100;
 
   return (
-    <div className="flex flex-col items-center justify-center h-full max-w-lg mx-auto py-12">
-      <div className="flex bg-gray-900/50 p-1 rounded-2xl border border-gray-800 mb-12">
+    <div className="flex flex-col items-center justify-center h-full max-w-lg mx-auto py-8 md:py-12 px-4">
+      {/* Mode Selector */}
+      <div className="flex bg-gray-900/50 p-1 rounded-2xl border border-gray-800 mb-8 md:mb-12 w-full max-w-xs justify-between">
         {Object.values(TimerMode).map((m) => (
           <button
             key={m}
             onClick={() => { setMode(m); setStatus(TimerStatus.IDLE); }}
-            className={`px-6 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-              mode === m 
-                ? 'bg-green-500 text-black shadow-lg shadow-green-500/20' 
+            className={`flex-1 px-2 py-2 rounded-xl text-xs md:text-sm font-medium transition-all duration-200 truncate ${mode === m
+                ? 'bg-green-500 text-black shadow-lg shadow-green-500/20'
                 : 'text-gray-400 hover:text-gray-200'
-            }`}
+              }`}
           >
             {m}
           </button>
         ))}
       </div>
 
-      <div className="relative w-72 h-72 md:w-96 md:h-96 flex items-center justify-center">
+      {/* Timer Circle - Fluid Sizing */}
+      <div className="relative w-[70vw] h-[70vw] max-w-[18rem] max-h-[18rem] md:w-96 md:h-96 flex items-center justify-center">
         <svg className="absolute inset-0 w-full h-full -rotate-90">
-          <circle cx="50%" cy="50%" r="48%" fill="none" stroke="currentColor" strokeWidth="8" className="text-gray-800" />
+          <circle cx="50%" cy="50%" r="48%" fill="none" stroke="currentColor" strokeWidth="6" className="text-gray-800" />
           <circle
-            cx="50%" cy="50%" r="48%" fill="none" stroke="url(#timerGradient)" strokeWidth="8"
+            cx="50%" cy="50%" r="48%" fill="none" stroke="url(#timerGradient)" strokeWidth="6"
             strokeDasharray="100 100" strokeDashoffset={100 - progress} strokeLinecap="round"
             style={{ transition: 'stroke-dashoffset 1s linear' }}
           />
@@ -112,29 +144,32 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({ settings, onSessionComplete
         </svg>
 
         <div className="text-center z-10">
-          <h2 className="text-7xl md:text-8xl font-black tracking-tighter text-white tabular-nums drop-shadow-2xl">
+          <h2 className="text-6xl md:text-8xl font-black tracking-tighter text-white tabular-nums drop-shadow-2xl">
             {formatTime(timeLeft)}
           </h2>
-          <p className="text-gray-400 font-medium uppercase tracking-[0.2em] mt-2">
+          <p className="text-gray-400 font-medium uppercase tracking-[0.2em] mt-2 text-xs md:text-base">
             {status === TimerStatus.RUNNING ? 'Focusing...' : 'Ready?'}
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-6 mt-16">
+      {/* Controls */}
+      <div className="flex items-center gap-6 mt-8 md:mt-16">
         <button
           onClick={resetTimer}
-          className="p-4 rounded-2xl bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-all border border-gray-700/50"
+          className="p-4 rounded-2xl bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-all border border-gray-700/50 active:scale-95"
+          aria-label="Reset Timer"
         >
           <Icons.Reset />
         </button>
         <button
           onClick={toggleTimer}
-          className="w-24 h-24 rounded-full mint-gradient text-black flex items-center justify-center shadow-2xl shadow-green-500/40 hover:scale-105 active:scale-95 transition-all"
+          className="w-20 h-20 md:w-24 md:h-24 rounded-full mint-gradient text-black flex items-center justify-center shadow-2xl shadow-green-500/40 hover:scale-105 active:scale-95 transition-all"
+          aria-label={status === TimerStatus.RUNNING ? 'Pause Timer' : 'Start Timer'}
         >
           {status === TimerStatus.RUNNING ? <Icons.Pause /> : <Icons.Play />}
         </button>
-        <div className="w-14" />
+        <div className="w-14 hidden md:block" /> {/* Spacer for symmetry on desktop */}
       </div>
     </div>
   );

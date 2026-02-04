@@ -1,73 +1,67 @@
-# React + TypeScript + Vite
+# Mint Pomodoro
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A beautiful, privacy-focused Pomodoro timer application built with **React**, **TypeScript**, and **Vite**. Designed to help you stay focused and productive without any distractions or privacy concerns.
 
-Currently, two official plugins are available:
+![Mint Pomodoro](https://via.placeholder.com/800x400?text=Mint+Pomodoro+Preview)
+*(Replace this placeholder with a real screenshot of your app)*
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## React Compiler
+- **⏱️ Focus Timer**: Customizable Pomodoro timer with Work, Short Break, and Long Break modes.
+- **📝 Task Management**: Built-in task board to track your to-dos.
+- **📊 Statistics**: Visualize your productivity with detailed usage stats.
+- **📱 Fully Responsive**: Optimized for both Desktop and Mobile devices.
+- **🎨 Modern Design**: Sleek, dark-themed UI with mint accents and smooth animations.
+- **🔒 Privacy First**: All data is stored locally. No external servers, **no API keys**, and no tracking.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Getting Started (Zero Config)
 
-## Expanding the ESLint configuration
+This project is designed to be "Clone & Run". No complex configuration or API keys are required.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- [Node.js](https://nodejs.org/) (v18+ recommended)
+- [npm](https://www.npmjs.com/)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Quick Start Guide
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **Clone the repository**:
+   ```bash
+   git clone <your-repo-url>
+   cd mint-pomodoro
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Run the app**:
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:5173` in your browser. That's it!
+
+### Building for Production
+To build the app for deployment (e.g., Netlify/Vercel):
+```bash
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Project Structure (Clean Code)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+This project follows Clean Code principles with a modular architecture:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `src/components`: UI Components (TimerDisplay, TaskBoard, etc.)
+- `src/context`: Global State Management preventing prop drilling (Settings, Tasks, Session)
+- `src/hooks`: Custom React Hooks (useAudio, useLocalStorage)
+- `src/constants`: Configuration and static values
+- `src/types`: TypeScript definitions
+
+## Contributing
+
+Feel free to open issues or submit pull requests if you have ideas for improvements!
+
+---
+
+Built with ❤️ using React & Vite.

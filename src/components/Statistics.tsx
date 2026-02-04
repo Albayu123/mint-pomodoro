@@ -1,14 +1,11 @@
-
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useSessions } from '../context/SessionContext';
 import { TimerMode } from '../types';
-import type { FocusSession } from '../types';
 
-interface StatisticsProps {
-  sessions: FocusSession[];
-}
+const Statistics: React.FC = () => {
+  const { sessions } = useSessions();
 
-const Statistics: React.FC<StatisticsProps> = ({ sessions }) => {
   const totalFocusTime = sessions.reduce((acc, curr) =>
     curr.mode === TimerMode.WORK ? acc + curr.duration : acc, 0
   );
@@ -39,16 +36,16 @@ const Statistics: React.FC<StatisticsProps> = ({ sessions }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 md:p-12 h-full overflow-y-auto custom-scrollbar">
-      <h2 className="text-3xl font-bold text-white tracking-tight mb-8">Statistics</h2>
+    <div className="max-w-4xl mx-auto p-4 md:p-12 h-full overflow-y-auto custom-scrollbar pb-24 md:pb-0">
+      <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-6 md:mb-8">Statistics</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
         <StatCard label="Total Focus Time" value={formatDuration(totalFocusTime)} />
         <StatCard label="Total Sessions" value={totalSessions.toString()} />
         <StatCard label="Today's Focus" value={formatDuration(todayFocusTime)} highlight />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mb-12">
         <div className="bg-[#1a1a1a] p-6 rounded-3xl border border-gray-800">
           <h3 className="text-lg font-bold text-gray-200 mb-6">Activity Breakdown</h3>
           <div className="h-64">
@@ -72,7 +69,7 @@ const Statistics: React.FC<StatisticsProps> = ({ sessions }) => {
 
         <div className="bg-[#1a1a1a] p-6 rounded-3xl border border-gray-800 flex flex-col">
           <h3 className="text-lg font-bold text-gray-200 mb-6">Recent History</h3>
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4 max-h-64 lg:max-h-none">
             {recentSessions.length > 0 ? (
               recentSessions.map((session, idx) => (
                 <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-gray-900/50 border border-gray-800/50">
@@ -97,8 +94,8 @@ const Statistics: React.FC<StatisticsProps> = ({ sessions }) => {
 
 const StatCard: React.FC<{ label: string; value: string; highlight?: boolean }> = ({ label, value, highlight }) => (
   <div className={`p-6 rounded-3xl border transition-all hover:scale-105 ${highlight
-      ? 'bg-gradient-to-br from-green-500/20 to-emerald-900/20 border-green-500/30'
-      : 'bg-[#1a1a1a] border-gray-800'
+    ? 'bg-gradient-to-br from-green-500/20 to-emerald-900/20 border-green-500/30'
+    : 'bg-[#1a1a1a] border-gray-800'
     }`}>
     <p className="text-sm text-gray-400 font-medium uppercase tracking-wider mb-2">{label}</p>
     <p className={`text-3xl font-black tracking-tight ${highlight ? 'text-green-400' : 'text-white'}`}>

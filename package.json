@@ -12,7 +12,6 @@
     "start": "concurrently -k \"npm run dev\" \"wait-on tcp:5173 && npm run electron\""
   },
   "dependencies": {
-    "@google/genai": "^1.30.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.0"

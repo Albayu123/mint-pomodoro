@@ -1,3 +1,12 @@
+export const AUDIO_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
+
+export const NavTabs = {
+  TIMER: 'timer',
+  TASKS: 'tasks',
+  STATS: 'stats',
+  SETTINGS: 'settings',
+} as const;
+
 export const DEFAULT_SETTINGS = {
   workDuration: 25,
   shortBreakDuration: 5,
@@ -28,11 +37,7 @@ export const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   ),
-  Sparkles: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-    </svg>
-  ),
+
   Play: () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
       <path d="M8 5v14l11-7z" />
