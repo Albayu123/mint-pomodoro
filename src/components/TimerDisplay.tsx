@@ -16,8 +16,46 @@ const TimerDisplay: React.FC = () => {
   const [mode, setMode] = useState<TimerMode>(TimerMode.WORK);
   const [status, setStatus] = useState<TimerStatus>(TimerStatus.IDLE);
   const [timeLeft, setTimeLeft] = useState(settings.workDuration * 60);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const workerRef = useRef<Worker | null>(null);
 
+  useEffect(() => {
+    // Initialize Web Worker
+    workerRef.current = new Worker(new URL('../workers/timer.worker.ts', import.meta.url), {
+      type: 'module',
+    });
+
+    workerRef.current.onmessage = (e) => {
+      if (e.data.type === 'TICK') {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            handleSessionComplete(mode, getDurationForMode(mode) / 60);
+
+            if (mode === TimerMode.WORK) {
+              setMode(TimerMode.SHORT_BREAK);
+              if (!settings.autoStartBreaks) {
+                setStatus(TimerStatus.IDLE);
+                workerRef.current?.postMessage({ type: 'STOP' });
+              }
+            } else {
+              setMode(TimerMode.WORK);
+              if (!settings.autoStartPomodoros) {
+                setStatus(TimerStatus.IDLE);
+                workerRef.current?.postMessage({ type: 'STOP' });
+              }
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }
+    };
+
+    return () => {
+      workerRef.current?.terminate();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, settings.autoStartBreaks, settings.autoStartPomodoros]);
+  
   const getDurationForMode = useCallback((m: TimerMode) => {
     switch (m) {
       case TimerMode.WORK: return settings.workDuration * 60;
@@ -27,10 +65,14 @@ const TimerDisplay: React.FC = () => {
     }
   }, [settings]);
 
-  // Sync timer when settings change or mode changes while IDLE
   useEffect(() => {
     if (status === TimerStatus.IDLE) {
       setTimeLeft(getDurationForMode(mode));
+      workerRef.current?.postMessage({ type: 'STOP' });
+    } else if (status === TimerStatus.RUNNING) {
+      workerRef.current?.postMessage({ type: 'START' });
+    } else if (status === TimerStatus.PAUSED) {
+      workerRef.current?.postMessage({ type: 'STOP' });
     }
   }, [mode, status, getDurationForMode]);
 
@@ -63,42 +105,18 @@ const TimerDisplay: React.FC = () => {
   const toggleTimer = () => {
     if (status === TimerStatus.RUNNING) {
       setStatus(TimerStatus.PAUSED);
-      if (timerRef.current) clearInterval(timerRef.current);
+      workerRef.current?.postMessage({ type: 'STOP' });
     } else {
       setStatus(TimerStatus.RUNNING);
+      workerRef.current?.postMessage({ type: 'START' });
     }
   };
 
   const resetTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    workerRef.current?.postMessage({ type: 'STOP' });
     setStatus(TimerStatus.IDLE);
     setTimeLeft(getDurationForMode(mode));
   };
-
-  useEffect(() => {
-    if (status === TimerStatus.RUNNING) {
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current!);
-            handleSessionComplete(mode, getDurationForMode(mode) / 60);
-
-            if (mode === TimerMode.WORK) {
-              setMode(TimerMode.SHORT_BREAK);
-              if (!settings.autoStartBreaks) setStatus(TimerStatus.IDLE);
-            } else {
-              setMode(TimerMode.WORK);
-              if (!settings.autoStartPomodoros) setStatus(TimerStatus.IDLE);
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, mode]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -126,7 +144,6 @@ const TimerDisplay: React.FC = () => {
         ))}
       </div>
 
-      {/* Timer Circle - Fluid Sizing */}
       <div className="relative w-[70vw] h-[70vw] max-w-[18rem] max-h-[18rem] md:w-96 md:h-96 flex items-center justify-center">
         <svg className="absolute inset-0 w-full h-full -rotate-90">
           <circle cx="50%" cy="50%" r="48%" fill="none" stroke="currentColor" strokeWidth="6" className="text-gray-800" />
