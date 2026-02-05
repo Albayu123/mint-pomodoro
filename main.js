@@ -15,13 +15,15 @@ function createWindow() {
       contextIsolation: false,
     },
     backgroundColor: '#121212',
-    icon: path.join(__dirname, 'public/icon.png') // Opsional jika ada ikon
+    icon: path.join(__dirname, 'public/icon.png'), // Opsional jika ada ikon
   });
 
-  // Saat pengembangan, buka dari server Vite
-  win.loadURL('http://localhost:5173');
+  if (app.isPackaged) {
+    win.loadFile(path.join(__dirname, 'dist/index.html'));
+  } else {
+    win.loadURL('http://localhost:5173');
+  }
 
-  // Sembunyikan menu bar agar terlihat lebih native/modern
   win.setMenuBarVisibility(false);
 }
 

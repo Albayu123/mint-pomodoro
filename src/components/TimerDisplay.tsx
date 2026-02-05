@@ -55,15 +55,22 @@ const TimerDisplay: React.FC = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, settings.autoStartBreaks, settings.autoStartPomodoros]);
-  
-  const getDurationForMode = useCallback((m: TimerMode) => {
-    switch (m) {
-      case TimerMode.WORK: return settings.workDuration * 60;
-      case TimerMode.SHORT_BREAK: return settings.shortBreakDuration * 60;
-      case TimerMode.LONG_BREAK: return settings.longBreakDuration * 60;
-      default: return settings.workDuration * 60;
-    }
-  }, [settings]);
+
+  const getDurationForMode = useCallback(
+    (m: TimerMode) => {
+      switch (m) {
+        case TimerMode.WORK:
+          return settings.workDuration * 60;
+        case TimerMode.SHORT_BREAK:
+          return settings.shortBreakDuration * 60;
+        case TimerMode.LONG_BREAK:
+          return settings.longBreakDuration * 60;
+        default:
+          return settings.workDuration * 60;
+      }
+    },
+    [settings]
+  );
 
   useEffect(() => {
     if (status === TimerStatus.IDLE) {
@@ -85,13 +92,13 @@ const TimerDisplay: React.FC = () => {
     setSessions((prev) => [...prev, newSession]);
 
     if (completedMode === TimerMode.WORK) {
-      setTasks(prev => {
-        const firstActiveIdx = prev.findIndex(t => !t.completed);
+      setTasks((prev) => {
+        const firstActiveIdx = prev.findIndex((t) => !t.completed);
         if (firstActiveIdx !== -1) {
           const newTasks = [...prev];
           newTasks[firstActiveIdx] = {
             ...newTasks[firstActiveIdx],
-            pomodoros: newTasks[firstActiveIdx].pomodoros + 1
+            pomodoros: newTasks[firstActiveIdx].pomodoros + 1,
           };
           return newTasks;
         }
@@ -100,6 +107,14 @@ const TimerDisplay: React.FC = () => {
     }
 
     play();
+
+    // Show Notification
+    if (Notification.permission === 'granted') {
+      new Notification(completedMode === TimerMode.WORK ? 'Time for a break!' : 'Back to work!', {
+        body: `Focus session of ${duration} minutes complete.`,
+        icon: '/pwa-192x192.png',
+      });
+    }
   };
 
   const toggleTimer = () => {
@@ -107,6 +122,10 @@ const TimerDisplay: React.FC = () => {
       setStatus(TimerStatus.PAUSED);
       workerRef.current?.postMessage({ type: 'STOP' });
     } else {
+      // Request permission on first start
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
       setStatus(TimerStatus.RUNNING);
       workerRef.current?.postMessage({ type: 'START' });
     }
@@ -133,11 +152,15 @@ const TimerDisplay: React.FC = () => {
         {Object.values(TimerMode).map((m) => (
           <button
             key={m}
-            onClick={() => { setMode(m); setStatus(TimerStatus.IDLE); }}
-            className={`flex-1 px-2 py-2 rounded-xl text-xs md:text-sm font-medium transition-all duration-200 truncate ${mode === m
+            onClick={() => {
+              setMode(m);
+              setStatus(TimerStatus.IDLE);
+            }}
+            className={`flex-1 px-2 py-2 rounded-xl text-xs md:text-sm font-medium transition-all duration-200 truncate ${
+              mode === m
                 ? 'bg-green-500 text-black shadow-lg shadow-green-500/20'
                 : 'text-gray-400 hover:text-gray-200'
-              }`}
+            }`}
           >
             {m}
           </button>
@@ -146,10 +169,25 @@ const TimerDisplay: React.FC = () => {
 
       <div className="relative w-[70vw] h-[70vw] max-w-[18rem] max-h-[18rem] md:w-96 md:h-96 flex items-center justify-center">
         <svg className="absolute inset-0 w-full h-full -rotate-90">
-          <circle cx="50%" cy="50%" r="48%" fill="none" stroke="currentColor" strokeWidth="6" className="text-gray-800" />
           <circle
-            cx="50%" cy="50%" r="48%" fill="none" stroke="url(#timerGradient)" strokeWidth="6"
-            strokeDasharray="100 100" strokeDashoffset={100 - progress} strokeLinecap="round"
+            cx="50%"
+            cy="50%"
+            r="48%"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="6"
+            className="text-gray-800"
+          />
+          <circle
+            cx="50%"
+            cy="50%"
+            r="48%"
+            fill="none"
+            stroke="url(#timerGradient)"
+            strokeWidth="6"
+            strokeDasharray="100 100"
+            strokeDashoffset={100 - progress}
+            strokeLinecap="round"
             style={{ transition: 'stroke-dashoffset 1s linear' }}
           />
           <defs>
