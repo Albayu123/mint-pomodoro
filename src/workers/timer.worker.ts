@@ -10,6 +10,7 @@ ctx.onmessage = (e: MessageEvent) => {
     (ctx as any).timerInterval = setInterval(() => {
       ctx.postMessage({ type: 'TICK' });
     }, 1000);
+
   } else if (type === 'STOP') {
     if ((ctx as any).timerInterval) {
       clearInterval((ctx as any).timerInterval);
